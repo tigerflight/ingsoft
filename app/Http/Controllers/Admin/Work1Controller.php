@@ -1,12 +1,8 @@
 <?php
-/*Controlador Administrar trabajos
-*   Muestra todos los trabajos
-*   Crear un trabajo
-*   Muestra un trabajo en especifico
-*
-*
-*
+
+/* Este controlador solo controla la opcion de ANULAR trabajo
 */
+
 namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
@@ -17,7 +13,7 @@ use App\Student;
 use App\Academic;
 use App\Http\Requests\WorkStoreRequest;
 use App\Http\Requests\WorkUpdateRequest;
-class WorkController extends Controller
+class Work1Controller extends Controller
 {
 
 
@@ -102,12 +98,10 @@ class WorkController extends Controller
      */
     public function edit($id)
     {
-        $works = Work::orderBy('id','ASC')->get();
-        $work=Work::find($id);
-        $students = Student::orderBy('id','ASC')->get();
-        $academics = Academic::orderBy('id','ASC')->get();
-        $types = Type::orderBy('id','ASC')->get();
-        return view('admin.works.edit',compact('work','types','students','academics','works'));
+
+        Work::find($id)->fill(array('status'=>'ANULADA'))->save();
+        return  redirect()->route('works.index')->with('info','Actividad de titulación ANULADA correctamente');
+
     }
 
     /**
@@ -142,13 +136,14 @@ class WorkController extends Controller
         return view('admin.works.asignarComision',compact('work','academics'));
     }
 
-    public function anular($id)
+    public function cancelwork($id)
     {
-        //NO funciona la ruta se usa edit de work1
-        dd("hola");
 
-        Work::find($id)->fill(array('status'=>'ANULADA'))->save();
-        return  redirect()->route('works.index')->with('info','Actividad de titulación ANULADA correctamente');
 
+        /*
+        $work=Work::find($id);
+        $work->status='ANULADA';
+        $work->save();
+        return  redirect()->route('works.index',$work->id)->with('info','Actividad de titulación ANULADA correctamente');*/
     }
 }
