@@ -36,14 +36,14 @@ class Work3Controller extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    
+
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    
+
     /**
      * Display the specified resource.
      *
@@ -80,7 +80,7 @@ class Work3Controller extends Controller
     public function update(Request $request, $id)
     {
         $work=Work::find($id);
-        $work->grade = strval($request->grade);
+        
         $work->graduation_date = strval($request->graduation_date);
         $work->status = 'FINALIZADA';
         $work->save();

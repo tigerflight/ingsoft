@@ -7,11 +7,13 @@
             <div class="card">
                 <div class="card-header text-center font-weight-bold">
                     <a href ="{{route('works.index')}}"class="btn btn-primary  float-left">Volver</a>
-                    CREAR ACTIVIDAD DE TITULACIÓN.
+                    Comisión correctora
                     <div class ="card-body text-left">
-                    {!! Form::open(['route' => 'works.store'])!!}
-                        @include('admin.works.partials.formCreate')
+
+                    {!! Form::model($work,['route' =>['worksAcademics.update',$work->id],'method' => 'PUT']) !!}
+                        @include('admin.worksAcademics.partials.form')
                     {!!Form::close()!!}
+
 
                     <div>
                 </div>

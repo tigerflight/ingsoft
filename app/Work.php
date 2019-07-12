@@ -16,11 +16,8 @@ class Work extends Model
     protected $attributes = [
                     'status'=>'INGRESADA',
                     'cant_students'=>0,
-                    'year_reg'=>1992,
-                    'semester_reg'=>'PRIMERO',
-
-
-
+                    'year_reg'=>'2019',
+                    'semester_reg'=>'SEGUNDO',
     ];
     /**
      * Un trabajo pertenece a muchos estudiantes
@@ -32,15 +29,16 @@ class Work extends Model
     /**
      * Un trabajo pertenece a muchos estudiantes
      */
-    public function types(){
-        return $this->belongsTo(Type::class);
+    public function type(){
+        return $this->hasOne(Type::class);
     }
 
     /**
      *  Un trabajo pertenece a muchos academicos
      */
     public function academics(){
-        return $this->belongsToMany(Academic::class);
+        return $this->belongsToMany(Academic::class)->withPivot('academic_role')
+    	->withTimestamps();
     }
 
 }
