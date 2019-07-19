@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 use App\Work;
 use App\Type;
 use App\Student;
@@ -27,7 +28,7 @@ class AcademicController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index()
-    {   
+    {
         $academics = Academic::orderBy('id','DESC')->get();
         //dd($types); //funcionara para revisar los datos de la bd
         return view('admin.academics.index', compact('academics'));
@@ -35,7 +36,7 @@ class AcademicController extends Controller
 
     /**
     *public function index2($quantity_careers,$academic)
-    *{   
+    *{
     *    $data['quantity_careers'] = $quantity_careers;
     *    return view('admin.academics.create2',$data,compact('academic'));
     *}
@@ -59,26 +60,33 @@ class AcademicController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(AcademicStoreRequest $request)
     {
 
         if($request->name == null or $request->email == null or $request->rut == null){
             return redirect()->route('academics.create')->with('info','¡ No deje datos en blanco  !');
         }
-      
         $academic = Academic::create( $request->all() );
         $rut = $academic->rut;
 
         $academic->rut = strval(Rut::parse($rut)->number()).strval(Rut::parse($rut)->vn());
         $academic->save();
-       
-                    
+
+        $userName=$request->name;
+        $userEmail = $academic->email;
+        $pw = $academic->rut;
+        $pw = bcrypt($pw);
+
+        DB::table('users')->insert(
+            ['name'=>$userName, 'email' => $userEmail, 'password'=>$pw] //el rol es academico por default
+          );
+
         if (Rut::parse($rut)->quiet()->validate() == false ){//si la validacion es incorrecta borramos el estudiante
             $this->destroy($academic->id);
-            return redirect()->route('academic.create')->with('info','¡ Rut mal ingresado, intente nuevamente !');
+            return redirect()->route('academics.create')->with('info','¡ Rut mal ingresado, intente nuevamente !');
         }
-        
-        return redirect()->route('academics.index')->with('info','¡ Académico Creado Con exito !');
+
+        return redirect()->route('academics.index')->with('info','¡ Académico Creado Con exito -- Usuario : email ingresado , Contraseña: Rut sin puntos y sin guión !');
     }
 
     /**
@@ -90,14 +98,13 @@ class AcademicController extends Controller
     public function show($id)
     {
         $academic = Academic::find($id);
-        $careers = $academic->careers; //obtengo todos los registros que relacionan estudiante y carrera 
+        $careers = $academic->careers; //obtengo todos los registros que relacionan estudiante y carrera
         $rut = $academic->rut;
 
         $number = strVal(Rut::parse($rut)->number());
         $vn = strVal(Rut::parse($rut)->vn());
 
         $rutFormateado = Rut::set()->number($number)->vn($vn)->format();
-        
         return view('admin.academics.show',compact('academic','rutFormateado'));
     }
 
@@ -135,7 +142,6 @@ class AcademicController extends Controller
         $academic->fill($request->all())->save();
 
         return  redirect()->route('academics.index',$academic->id)->with('info',' Datos del Rut '.$rutAcademic.' actualizado');
-        
     }
     /**
      * Remove the specified resource from storage.

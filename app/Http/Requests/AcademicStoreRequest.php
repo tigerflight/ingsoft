@@ -25,9 +25,9 @@ class AcademicStoreRequest extends FormRequest
     {
         return
         [
-            'rut'=>'required|academics,rut,cl_rut',
+            'rut'=>'required|unique:academics,rut',
             'name'=>'required',
-            'email'=>'required|unique:academics,email',
+            'email' => 'required|email|unique:academics,email'
         ];
 
 

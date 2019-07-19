@@ -64,7 +64,7 @@ class WorkController extends Controller
     public function store(WorkStoreRequest $request)
     {
 
-
+        //dd($request);
         $title = $request->title;
         $status = 'INGRESADA';
         $start_date=$request->start_date;
@@ -113,7 +113,7 @@ class WorkController extends Controller
         if(sizeof($students)==0){
             return redirect()->route('works.create')->with('info','¡ Debe seleccionar al menos 1 estudiante !');
         }
-
+        //dd($students);
         if(sizeof($academics)==0){
             return redirect()->route('works.create')->with('info','¡ Debe seleccionar al menos 1 academico como profesor guia !');
         }
@@ -169,7 +169,13 @@ class WorkController extends Controller
         $students = Student::orderBy('id','ASC')->get();
         $academics = Academic::orderBy('id','ASC')->get();
         $types = Type::orderBy('id','ASC')->get();
-        return view('admin.works.edit',compact('work','types','students','academics','works'));
+        $type = Type::find($work->type_id);
+
+        $guides = $work->academics()->get();
+        //dd($guides[3]->pivot->academic_role);
+
+
+        return view('admin.works.edit',compact('work','type','types','students','academics','works','guides'));
     }
 
     /**
@@ -181,7 +187,34 @@ class WorkController extends Controller
      */
     public function update(WorkUpdateRequest $request, $id)
     {
+        //dd($request->all());
         $work=Work::find($id);
+        $type = Type::find($work->type_id);
+
+        $cantGuias = 0;
+        $cantMiembros = 0;
+        for ($i=0; $i < 3 -$type->req_external_org ; $i++) {
+            if($request->name[$i] != null){
+                $cantMiembros++;
+            }
+            if($request->role[$i] == 'GUIA'){
+                $cantGuias++;
+            }
+        }
+        if($cantGuias == 0){
+            return  redirect()->route('works.edit',$work->id)->with('info','¡Debe ingresar al menos 1 profesor guia!');
+        }
+        if($cantMiembros == 0){
+            return  redirect()->route('works.edit',$work->id)->with('info','¡Debe ingresar al menos 1 profesor guia!');
+        }
+
+
+        //Comision CORRECTORA
+        $work->academics()->detach();
+        for ($i=0; $i < 3 -$type->req_external_org ; $i++) {
+            $work->academics()->attach($request->name[$i], ['academic_role' => $request->role[$i]]);
+        }
+
         $work->fill($request->all())->save();
         return  redirect()->route('works.index',$work->id)->with('info','Actividad de titulación actualizada correctamente');
     }

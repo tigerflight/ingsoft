@@ -1,5 +1,6 @@
 <?php
 namespace App\Http\Controllers\Admin;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Work;
@@ -31,31 +32,53 @@ class WorkAcademicsController extends Controller{
         $types = Type::orderBy('id','ASC')->get();
         $students = Student::orderBy('id','ASC')->get();
         $academics = Academic::orderBy('id','ASC')->get();
-        //dd($types); //funcionara para revisar los datos de la bd
-        return view('admin.worksAcademics.show',compact('work','types','students','academics'));
+        $type = Type::find($work->type_id);
+
+        return view('admin.worksAcademics.show',compact('work','type','types','students','academics'));
     }
     public function edit($id)
     {
         $work=Work::find($id);
+        $guides = $work->academics()->where('academic_role','GUIA')->get();
+
         $students = Student::orderBy('id','ASC')->get();
-        $academics = Academic::orderBy('id','ASC')->get()->pluck('name');
+        $academics = Academic::orderBy('id','ASC')->whereNotIn('id',$guides->pluck('id')->toArray())->get();
         $types = Type::orderBy('id','ASC')->get();
-        return view('admin.worksAcademics.edit',compact('types','work','students','academics'));
+        $type = Type::find($work->type_id);
+
+        $max = $guides->count();
+        if($type->req_external_org){
+            $max += 1;
+        }
+
+        $max = 3 - $max;
+
+
+        return view('admin.worksAcademics.edit',compact('types','type','work','guides','students','academics','max'));
     }
     public function update(Request $request, $id)
     {
+        //dd($request->all());
+        $max = $request->max;
+
+
+
         $work=Work::find($id);
-        if($request->name1==$request->name2 || $request->name1==$request->name3 || $request->name2==$request->name3){
-            return  redirect()->route('worksAcademics.index')->with('info','No se puede ingresar dos o más veces al mismo académico');
+        $comisionId;
+        for ($i=0; $i <$max ; $i++) {
+            $comisionId[$i] = $request->all()['name'.$i];
+        }
+
+        //dd($comisionId);
+        for ($i=0; $i <$max ; $i++) {
+            if($comisionId != null){
+            $work->academics()->attach($comisionId[$i], ['academic_role' => 'CORRECTOR']);
+            }
         }
         $work->status = 'ACEPTADA';
-
-
-        $work->academics()->attach(Academic::where('name', $request->name1)->get(), ['academic_role' => $request->academic_role1]);
-
-        $work->academics()->attach(Academic::where('name', $request->name2)->get(), ['academic_role' => $request->academic_role2]);
-        $work->academics()->attach(Academic::where('name', $request->name3)->get(), ['academic_role' => $request->academic_role3]);
         $work->save();
+        
         return  redirect()->route('works.index')->with('info','Actividad de titulación autorizada correctamente');
+
     }
 }
